@@ -1,0 +1,17 @@
+# General parameters
+posfile		/home/bfalck/halo/b100/n256z0.pos
+outdir		/home/bfalck/halo/b100/
+taglabel	n256
+boxsize		100000.
+np1d		256
+nsplit		1
+numfiles	0
+
+# Used by vozinit
+buffer		0.1
+ndiv		2
+
+# Used by origamihalo
+volcut		.01
+npmin		20
+halolabel	n256d100
