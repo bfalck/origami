@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   m2 = (unsigned char *)malloc(n3d5*sizeof(unsigned char));
   sprintf(tagoutfile,"%s%stag.dat",outdir,label);
   tag = fopen(tagoutfile,"a");
-  fwrite(&np3,1,sizeof(int));
+  fwrite(&np3,1,sizeof(int),tag);  #previously was 'fwrite(&np3,1,sizeof(int));'
   for (i=0; i<df3; i++) {
     irem = i%df2;
     idiv = i/df2;
