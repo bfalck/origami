@@ -60,9 +60,14 @@ int main(int argc, char *argv[]) {
   for (i=0; i<div_factor; i++) {
     for (j=0; j<div_factor; j++) {
       for (k=0; k<div_factor; k++) {
-        sprintf(tagsubfile,"%s%stag_%d%d%d.dat",outdir,label,i,j,k);
+        sprintf(tagsubfile,"%s%s_tag_%d.dat",outdir,label,i+(div_factor*j)+(df2*k)); //fixed filename mismatch with oriagmidiv
 	    ijk = (df2*i)+(div_factor*j)+k;
 	    sub[ijk] = fopen(tagsubfile,"r");
+		//Safety check that gives clearer error message than 'Segmentation fault'
+		if (sub[ijk] == NULL) {			
+			printf("Unable to open sub-cube file %s\n",tagsubfile);
+			exit(0);
+		}
       }
     }
   }
@@ -70,7 +75,7 @@ int main(int argc, char *argv[]) {
   m1 = (unsigned char *)malloc(n3d3*sizeof(unsigned char));
   m2 = (unsigned char *)malloc(n3d5*sizeof(unsigned char));
   sprintf(tagoutfile,"%s%stag.dat",outdir,label);
-  tag = fopen(tagoutfile,"a");
+  tag = fopen(tagoutfile,"w"); // program now overwrites toytag.dat (used to append to previous toytag.dat)
   fwrite(&np3,1,sizeof(int),tag);  //previously was 'fwrite(&np3,1,sizeof(int));
   for (i=0; i<df3; i++) {
     irem = i%df2;
