@@ -61,10 +61,10 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
     /* 'qh facet_list' contains the convex hull */
     
     /* From qh_printvneighbors */
-    qh_countfacets(qh facet_list, NULL, NULL, &numfacets, &numsimplicial, 
+    qh_countfacets(qh facet_list, 0, 0, &numfacets, &numsimplicial, 
 		   &totneighbors, &numridges, &numcoplanars, &numtricoplanars);
     qh_vertexneighbors();
-    vertices= qh_facetvertices (qh facet_list, NULL, NULL);
+    vertices= qh_facetvertices (qh facet_list, 0, 0);
     vertex_points= qh_settemp (nvpall);
     coplanar_points= qh_settemp (nvpall);
     qh_setzero (vertex_points, 0, nvpall);
