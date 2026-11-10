@@ -14,6 +14,9 @@
 
 #define BF 1e30
 
+void read_parameters(char *filename);
+int readgadget(char *filename, float ***p);
+
 typedef struct Halo {
   int nmem;
   float hcent[3];

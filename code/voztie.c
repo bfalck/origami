@@ -11,6 +11,8 @@
 #include "voz.h"
 #include "params.h"
 
+void read_parameters(char *filename);
+
 int main(int argc, char *argv[]) {
 
   FILE *part, *adj, *vol;

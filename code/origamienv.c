@@ -13,6 +13,8 @@
 
 #define BIGFLT 1e30 /* Biggest possible floating-point number */
 
+void read_parameters(char *filename);
+
 typedef struct Particle {
   float vol;
   int nadj;
