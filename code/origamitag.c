@@ -29,9 +29,8 @@ int readgadget(char *filename, float ***p);
 
 /* Program usage. */
 void print_usage(const char *prog_name) {
-    printf("Usage: %s [-h] [-f paramfile]\n", prog_name);
+    printf("Usage: %s [-h] paramfile\n", prog_name);
     printf("  -h            Show this help message\n");
-    printf("  -f paramfile  Specify a parameter file\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -54,28 +53,30 @@ int main(int argc, char *argv[]) {
     float dx,d1,d2;
 
     /* Parse command line */
-    while ((opt = getopt(argc, argv, "hf:")) != -1) {
+    while ((opt = getopt(argc, argv, "h")) != -1) {
         switch (opt) {
             case 'h':
                 print_usage(argv[0]);
                 return 0;
-            case 'f':
-                paramfile = optarg;
-                break;
             case '?':
                 print_usage(argv[0]);
                 return 1;
             default:
+                print_usage(argv[0]);
                 abort();
         }
     }
 
-/*
-    if (argc < 2) {
-      printf("Please specify a parameter file\n");
-      exit(0);
-    } else paramfile = argv[1];
-*/
+    /* Parameter file should be a positional argument. */
+    if (optind == argc - 1) {
+        paramfile = argv[optind];
+    }
+    else {
+        fprintf(stderr, "You forgot to specify a parameter file.\n\n");
+        fprintf(stderr, "Usage: %s [-h] paramfile\n", argv[0]);
+        return 1;
+    }
+
     read_parameters(paramfile);
 
     b2 = boxsize/2.;
