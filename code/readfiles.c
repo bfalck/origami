@@ -13,6 +13,10 @@
 #define DL for (d=0;d<3;d++) /* Dimension loop */
 #define BF 1e30
 
+int load_snapshot(char *fname, int files);
+int reordering(void);
+int allocate_memory(void);
+
 /* Gadget variables: */
 struct io_header_1
 {
