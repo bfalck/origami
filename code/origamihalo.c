@@ -278,7 +278,7 @@ int main(int argc,char **argv) {
 	  minhalonum = halonum[i];
 	  for (j=0; j< p[i].nadj; j++) {
 	    adjj = p[i].adj[j];
-	    if ((p[adjj].tag == 3)) {
+	    if (p[adjj].tag == 3) {
 	      if (halonum[adjj] < minhalonum) {
 		if ((p[halonum[adjj]].vol >= volcut)||(lonecore[halonum[adjj]]==1)) {
 		  change=1;
@@ -291,7 +291,7 @@ int main(int argc,char **argv) {
 	    halonum[i] = minhalonum;
 	    for (j=0; j< p[i].nadj; j++) {
 	      adjj = p[i].adj[j];
-	      if ((p[adjj].tag == 3)) {
+	      if (p[adjj].tag == 3) {
 		if ((p[halonum[adjj]].vol >= volcut)||(lonecore[halonum[adjj]]==1)) {
 		  halonum[adjj] = minhalonum;
 		}
