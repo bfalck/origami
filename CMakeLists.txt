@@ -16,6 +16,8 @@
 #                                  the Qhull 2012.1 tarball shipped in the repo.
 #   -DORIGAMI_INT_IDS=ON           Use readfiles_int.c (4-byte Gadget particle
 #                                  IDs) instead of readfiles.c (8-byte IDs).
+#   -DORIGAMI_BUILD_TESTS=ON       Build the C unit tests in tests/; run them
+#                                  with `ctest --test-dir build` afterwards.
 #   -DOpenMP_ROOT=$(brew --prefix libomp)
 #                                  This may be needed on OS X to ensure use of
 #                                  an OpenMP installation from homebrew
@@ -37,6 +39,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O2")
 
 option(ORIGAMI_USE_SYSTEM_QHULL "Use an installed Qhull instead of the bundled 2012.1 tarball" OFF)
 option(ORIGAMI_INT_IDS "Read Gadget particle IDs as 4-byte integers (readfiles_int.c)" OFF)
+option(ORIGAMI_BUILD_TESTS "Build the C unit tests in tests/ (run with ctest)" OFF)
 set(QHULL_ROOT "" CACHE PATH "Optional hint: prefix of an installed Qhull (with ORIGAMI_USE_SYSTEM_QHULL=ON)")
 
 find_package(OpenMP REQUIRED)
@@ -156,3 +159,12 @@ add_custom_target(origami
 add_custom_target(voboz
   DEPENDS vozinit voz1b1 voztie
   COMMENT "Building VOBOZ tessellation tools")
+
+# ---------------------------------------------------------------------------
+# Unit tests (off by default). Build with -DORIGAMI_BUILD_TESTS=ON, then run
+# `ctest --test-dir build --output-on-failure`.
+# ---------------------------------------------------------------------------
+if(ORIGAMI_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()

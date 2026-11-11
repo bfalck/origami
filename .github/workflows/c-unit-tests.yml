@@ -1,0 +1,42 @@
+# Builds ORIGAMI and runs its C unit tests (tests/) on every push and pull request.
+#
+# The tests need only gcc, OpenMP (ships with gcc) and libm. The build uses the
+# bundled Qhull tarball, so no system packages are required beyond CMake.
+name: C unit tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: unit tests (ORIGAMI_INT_IDS=${{ matrix.int_ids }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # OFF: 8-byte Gadget IDs (readfiles.c, the default).
+        # ON:  4-byte Gadget IDs (readfiles_int.c).
+        int_ids: [OFF, ON]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure with tests enabled
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DORIGAMI_BUILD_TESTS=ON \
+            -DORIGAMI_INT_IDS=${{ matrix.int_ids }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run unit tests
+        run: ctest --test-dir build --output-on-failure --verbose
