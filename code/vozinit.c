@@ -21,6 +21,13 @@ int readgadget(char *filename, float ***p);
 /* Program usage. */
 void print_usage(const char *prog_name) {
   printf("%s: VOBOZ script initializer. Run before voz1b1.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Running vozinit will create a script called NAMEscr in the code/ directory;\n"
+         "  running NAMEscr will temporarily create files starting with 'part' in the\n"
+         "  current directory then delete them when finished, and will output the\n"
+         "  adjacency and volume files to outdir/NAMEadj.dat and outdir/NAMEvol.dat.\n"
+         "  The adjacency file gives you the Delaunay neighbors of each particle, and the\n"
+         "  volume file gives you the volume of each particle normalized to unity.\n\n");
   printf("Usage: %s [-h] paramfile\n", prog_name);
   printf("  -h            Show this help message\n");
 }
