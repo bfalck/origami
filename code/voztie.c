@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
     avgvol += (double)(vols[p]);
   }
   if (npnotdone > 0)
-    printf("%d particles not done!\n");
+    printf("%d particles not done!\n", npnotdone);
   printf("%d particles done more than once.\n",nvpsum-np);
   avgnadj /= (double)np;
   avgvol /= (double)np;
