@@ -6,6 +6,7 @@
 // The full license is in the file LICENSE, distributed with this software.
 //-----------------------------------------------------------------------------
 
+#include <unistd.h>
 #include "qhull_a.h"
 #include "voz.h"
 #include "params.h"
@@ -19,8 +20,19 @@ int posread(char *posfile, float ***p, float fact);
 int readgadget(char *filename, float ***p);
 void read_parameters(char *filename);
 
+void print_usage(const char *prog_name) {
+  printf("Usage: %s [-h] paramfile b0 b1 b2\n", prog_name);
+  printf("  -h           Show this help message\n"
+         "  paramfile    VOBOZ parameter settings\n"
+         "  b0           b-index 0 [integer]\n"
+         "  b1           b-index 1 [integer]\n"
+         "  b2           b-index 2 [integer]\n");
+}
 
 int main(int argc, char *argv[]) {
+  int opt;
+  char *paramfile = NULL;
+
   int exitcode;
   int i, j, np;
   float **r;
@@ -28,7 +40,7 @@ int main(int argc, char *argv[]) {
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
   pointT intpoints[3*MAXVERVER];
   FILE *pos, *out;
-  char *paramfile, outfile[80];
+  char outfile[80];
   PARTADJ *adjs;
   float *vols;
   float predict, xmin,xmax,ymin,ymax,zmin,zmax;
@@ -42,13 +54,35 @@ int main(int argc, char *argv[]) {
   int b[3];
   double totalvol;
 
-  if (argc != 5) {
-    printf("Wrong number of arguments.\n");
-    printf("arg1: parameter file\n");
-    printf("arg2-4: b[0-2]\n\n");
-    exit(0);
+  /* Parse command line */
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return 1;
+      default:
+        print_usage(argv[0]);
+        abort();
+    }
   }
-  paramfile = argv[1];
+  /* expect 4 positional arguments */
+  if (optind == argc - 4) {
+    paramfile = argv[optind];
+    for (int i = optind + 1; i < argc; i++) {
+      if (sscanf(argv[i], "%d", &b[i-2]) != 1) {
+        fprintf(stderr, "b index %d = %s is formatted incorrectly.\n", i-2, argv[i]);
+        return 1;
+      }
+    }
+  }
+  else {
+    fprintf(stderr, "Missing required arguments.\n\n");
+    print_usage(argv[0]);
+    return 1;
+  }
   read_parameters(paramfile);
 
   if (numdiv == 1) {
@@ -58,24 +92,15 @@ int main(int argc, char *argv[]) {
     printf("Cannot have a number of divisions less than 1. Resetting to 1.\n");
     numdiv = 1;
   }
-  if (sscanf(argv[2],"%d",&b[0]) != 1) {
-    printf("That's no b index; try again.\n");
-    exit(0);
-  }
-  if (sscanf(argv[3],"%d",&b[1]) != 1) {
-    printf("That's no b index; try again.\n");
-    exit(0);
-  }
-  if (sscanf(argv[4],"%d",&b[2]) != 1) {
-    printf("That's no b index; try again.\n");
-    exit(0);
-  }
   
   /* Read the position file */
   if (numfiles > 0) {
     np = readgadget(posfile,&r);
     for (i=0; i<np; i++) DL r[i][d] /= boxsize;
-  } else np = posread(posfile,&r,1./boxsize);
+  }
+  else {
+    np = posread(posfile,&r,1./boxsize);
+  }
   /* Boxsize should be the range in r, yielding a range 0-1 */
   printf("%d particles\n",np);fflush(stdout);
   xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
@@ -88,18 +113,21 @@ int main(int argc, char *argv[]) {
 
   width = 1./(float)numdiv;
   width2 = 0.5*width;
-  if (buffer > 0.) bf = buffer;
-  else bf = 0.1;
-      /* In units of 0-1, the thickness of each subregion's buffer*/
+  if (buffer > 0.)
+    bf = buffer;
+  else
+    bf = 0.1;
+
+  /* In units of 0-1, the thickness of each subregion's buffer*/
   totwidth = width+2.*bf;
   totwidth2 = width2 + bf;
   
   s = width/(float)NGUARD;
   if ((bf*bf - 2.*s*s) < 0.) {
-    printf("bf = %f, s = %f.\n",bf,s);
-    printf("Not enough guard points for given border.\nIncrease guards to >= %f\n.",
+    fprintf(stderr, "bf = %f, s = %f.\n", bf, s);
+    fprintf(stderr, "Not enough guard points for given border.\nIncrease guards to >= %f\n.",
 	   sqrt(2.)*width/bf);
-    exit(0);
+    return 1;
   }
   g = (bf / 2.)*(1. + sqrt(1 - 2.*s*s/(bf*bf)));
   printf("s = %f, bf = %f, g = %f.\n",s,bf,g);
@@ -108,8 +136,8 @@ int main(int argc, char *argv[]) {
 
   adjs = (PARTADJ *)malloc(np*sizeof(PARTADJ));
   if (adjs == NULL) {
-    printf("Unable to allocate adjs\n");
-    exit(0);
+    fprintf(stderr, "Unable to allocate adjs\n");
+    return 1;
   }
   
   DL c[d] = ((float)b[d]+0.5)*width;
@@ -129,8 +157,10 @@ int main(int argc, char *argv[]) {
       isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
     }
   
-    if (isitinbuf) nvpbuf++;
-    if (isitinmain) nvp++;
+    if (isitinbuf)
+      nvpbuf++;
+    if (isitinmain)
+      nvp++;
   }
   
   nvpbuf += 6*(NGUARD+1)*(NGUARD+1); /* number of guard
@@ -310,8 +340,8 @@ int main(int argc, char *argv[]) {
   printf("Output to %s\n\n",outfile);
   out = fopen(outfile,"w");
   if (out == NULL) {
-    printf("Unable to open %s\n",outfile);
-    exit(0);
+    fprintf(stderr, "Unable to open %s\n", outfile);
+    return 1;
   }
   fwrite(&np,1, sizeof(int),out);
   fwrite(&nvp,1, sizeof(int),out);
