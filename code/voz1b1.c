@@ -21,6 +21,7 @@ int readgadget(char *filename, float ***p);
 void read_parameters(char *filename);
 
 void print_usage(const char *prog_name) {
+  printf("%s: VOBOZ tesselation on sub-cubes.\n\n", prog_name);
   printf("Usage: %s [-h] paramfile b0 b1 b2\n", prog_name);
   printf("  -h           Show this help message\n"
          "  paramfile    VOBOZ parameter settings\n"

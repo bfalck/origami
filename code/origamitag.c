@@ -29,6 +29,13 @@ int readgadget(char *filename, float ***p);
 
 /* Program usage. */
 void print_usage(const char *prog_name) {
+    printf("%s: morphology identification.\n\n", prog_name);
+    printf("  DETAILS:\n\n"
+           "  Calculate the ORIGAMI morphology of every particle and save this as a\n"
+           "  byte array in outdir/NAMEtag.dat. The morphology index is 0 for voids,\n"
+           "  1 for walls, 2 for filaments, and 3 for halo particles, corresponding to\n"
+           "  the maximum number of orthogonal axes along which shell-crossing has been\n"
+           "  detected. This should run much faster than the tessellation calculation.\n\n");
     printf("Usage: %s [-h] paramfile\n", prog_name);
     printf("  -h            Show this help message\n");
 }

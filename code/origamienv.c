@@ -31,6 +31,19 @@ typedef struct Halo {
 
 /* Program usage. */
 void print_usage(const char *prog_name) {
+  printf("%s: determine morphological environment of different halos.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Determine the effect of the Vainshtein screening mechanism on halos in\n"
+         "  different web environments. This step requires the tessellation, morphology,\n"
+         "  and halo files\n"
+         "    - outdir/NAMEadj.dat\n"
+         "    - outdir/NAMEtag.dat\n"
+         "    - outdir/HNAMEhns.dat\n"
+         "  We first calculate the number of halo neighbors of each halo; if a halo is\n"
+         "  connected to three or more different halos on the tessellation, then it is\n"
+         "  in a cluster. If not, we calculate the fraction of halo, filament, wall,\n"
+         "  and void particles that the halo is connected to and assign the halo to\n"
+         "  the morphology with the highest fraction of connected particles.\n\n");
   printf("Usage: %s [-h] paramfile\n", prog_name);
   printf("  -h            Show this help message\n");
 }

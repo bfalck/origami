@@ -25,6 +25,16 @@ typedef struct Particle {
 
 /* Program usage. */
 void print_usage(const char *prog_name) {
+  printf("%s: group halos after tesselation + morphology identification.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Once you have the tessellation and morphology files, this groups the\n"
+         "  identified halo particles into distinct halos. Running produces the file\n"
+         "  outdir/HNAMEhns.dat containing the particle IDs in each halo. This binary\n"
+         "  file first contains the (4 byte integer) number of halos, then the number\n"
+         "  of particles in the first halo, then the particle IDs in the first halo,\n"
+         "  etc. Refer to the IDL routine origamicat.pro for an example of how to read\n"
+         "  this file. See the ORIGAMI paper for details on the effect of the volume\n"
+         "  cut parameter.\n\n");
   printf("Usage: %s [-h] paramfile\n", prog_name);
   printf("  -h            Show this help message\n");
 }

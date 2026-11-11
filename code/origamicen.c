@@ -28,6 +28,18 @@ int posread(char *posfile, float ***p, float fact);
 
 /* Program usage. */
 void print_usage(const char *prog_name) {
+  printf("%s: halo center calculation.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Find halo centers by averaging particle positions, weighted by each\n"
+         "  particle's VTFE density.\n\n"
+         "  Note that the outdir must contain the output of previous steps to produce\n"
+         "  the file outdir/HNAMEcen.dat containing the x, y, and z centers of each\n"
+         "  halo. The IDL routine origamicat.pro calculates the rest of the halo\n"
+          "  properties and writes them to the file outdir/HNAMEcat.dat (for details,\n"
+         "  see origamicat.pro on how to run that routine). Note: if you've changed\n"
+         "  readfiles.c to read the position and velocity files in a different format,\n"
+         "  you must update origamicat.pro as well.\n\n");
+
   printf("Usage: %s [-h] paramfile\n", prog_name);
   printf("  -h            Show this help message\n");
 }
