@@ -9,10 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
 #include "voz.h"
 #include "params.h"
 
 #define BF 1e30
+
+void read_parameters(char *filename);
+int readgadget(char *filename, float ***p);
 
 typedef struct Halo {
   int nmem;
@@ -22,12 +26,31 @@ typedef struct Halo {
 
 int posread(char *posfile, float ***p, float fact);
 
+/* Program usage. */
+void print_usage(const char *prog_name) {
+  printf("%s: halo center calculation.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Find halo centers by averaging particle positions, weighted by each\n"
+         "  particle's VTFE density.\n\n"
+         "  Note that the outdir must contain the output of previous steps to produce\n"
+         "  the file outdir/HNAMEcen.dat containing the x, y, and z centers of each\n"
+         "  halo. The IDL routine origamicat.pro calculates the rest of the halo\n"
+          "  properties and writes them to the file outdir/HNAMEcat.dat (for details,\n"
+         "  see origamicat.pro on how to run that routine). Note: if you've changed\n"
+         "  readfiles.c to read the position and velocity files in a different format,\n"
+         "  you must update origamicat.pro as well.\n\n");
+
+  printf("Usage: %s [-h] paramfile\n", prog_name);
+  printf("  -h            Show this help message\n");
+}
 
 int main(int argc, char *argv[]) {
+  int opt;
+  char *paramfile = NULL;
 
   FILE *pos,*vol,*hid,*cat,*nhalo;
   HALO *h;
-  char volfile[80],hidfile[80],catfile[80],*paramfile;
+  char volfile[80],hidfile[80],catfile[80];
 
   int np,nv,*haloid,nh,thisn;
   float **p, *v, wtot;
@@ -35,10 +58,31 @@ int main(int argc, char *argv[]) {
   float b2,negb2,temp[3],thisp;
   int i,j,k,l,l0;
 
-  if (argc < 2) {
-    printf("Please specify a parameter file\n");
-    exit(0);
-  } else paramfile = argv[1];
+  /* Parse command line */
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return 1;
+      default:
+        print_usage(argv[0]);
+        abort();
+    }
+  }
+
+  /* Parameter file should be a positional argument. */
+  if (optind == argc - 1) {
+    paramfile = argv[optind];
+  }
+  else {
+    fprintf(stderr, "You forgot to specify a parameter file.\n\n");
+    fprintf(stderr, "Usage: %s [-h] paramfile\n", argv[0]);
+    return 1;
+  }
+
   read_parameters(paramfile);
 
   sprintf(volfile,"%s%svol.dat",outdir,taglabel);
@@ -125,8 +169,4 @@ int main(int argc, char *argv[]) {
   for (i=0; i<nh; i++) fwrite(&h[i].hcent[1],1,sizeof(float),cat);
   for (i=0; i<nh; i++) fwrite(&h[i].hcent[2],1,sizeof(float),cat);
   fclose(cat);
-
-
-
-
 }

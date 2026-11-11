@@ -9,9 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
 #include "params.h"
 
 #define BIGFLT 1e30 /* Biggest possible floating-point number */
+
+void read_parameters(char *filename);
 
 typedef struct Particle {
   float vol;
@@ -26,13 +29,34 @@ typedef struct Halo {
   int *mem;
 } HALO;
 
+/* Program usage. */
+void print_usage(const char *prog_name) {
+  printf("%s: determine morphological environment of different halos.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Determine the effect of the Vainshtein screening mechanism on halos in\n"
+         "  different web environments. This step requires the tessellation, morphology,\n"
+         "  and halo files\n"
+         "    - outdir/NAMEadj.dat\n"
+         "    - outdir/NAMEtag.dat\n"
+         "    - outdir/HNAMEhns.dat\n"
+         "  We first calculate the number of halo neighbors of each halo; if a halo is\n"
+         "  connected to three or more different halos on the tessellation, then it is\n"
+         "  in a cluster. If not, we calculate the fraction of halo, filament, wall,\n"
+         "  and void particles that the halo is connected to and assign the halo to\n"
+         "  the morphology with the highest fraction of connected particles.\n\n");
+  printf("Usage: %s [-h] paramfile\n", prog_name);
+  printf("  -h            Show this help message\n");
+}
+
 int main(int argc,char **argv) {
+
+  int opt;
+  char *paramfile = NULL;
 
   FILE *adj, *tag, *hid, *env, *nbr;
   PARTICLE *p;
   HALO *h;
   char adjfile[80],tagfile[80],hidfile[80],envfile[80],nbrfile[80];
-  char *paramfile;
   int i,j,k,l,ll, np,nin, adjj, nh;
   int *haloid, *hnbrnum, hnbr[8000], hnum;
   float *hfrac, *ffrac, *wfrac, *vfrac, thisn;
@@ -40,10 +64,30 @@ int main(int argc,char **argv) {
   unsigned char *htag;
   float havg, favg, wavg, vavg;
 
-  if (argc < 2) {
-    printf("Please specify a parameter file\n");
-    exit(0);
-  } else paramfile = argv[1];
+  /* Parse command line */
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return 1;
+      default:
+        print_usage(argv[0]);
+        abort();
+    }
+  }
+
+  /* Parameter file should be a positional argument. */
+  if (optind == argc - 1) {
+    paramfile = argv[optind];
+  }
+  else {
+    fprintf(stderr, "You forgot to specify a parameter file.\n\n");
+    fprintf(stderr, "Usage: %s [-h] paramfile\n", argv[0]);
+    return 1;
+  }
   read_parameters(paramfile);
 
   sprintf(adjfile,"%s%sadj.dat",outdir,taglabel);

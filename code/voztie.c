@@ -8,13 +8,26 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "voz.h"
 #include "params.h"
 
+void read_parameters(char *filename);
+
+/* Program usage. */
+void print_usage(const char *prog_name) {
+  printf("%s: Combine tesselation on sub-cubes produced by voz1b1.\n\n", prog_name);
+  printf("Usage: %s [-h] paramfile\n", prog_name);
+  printf("  -h            Show this help message\n");
+}
+
 int main(int argc, char *argv[]) {
 
+  int opt;
+  char *paramfile = NULL;
+
   FILE *part, *adj, *vol;
-  char *paramfile, partfile[80], adjfile[80], volfile[80];
+  char partfile[80], adjfile[80], volfile[80];
   float *vols, volstemp;
   
   PARTADJ *adjs;
@@ -25,10 +38,30 @@ int main(int argc, char *argv[]) {
   int nvp,npnotdone,nvpmax, nvpsum, *orig;
   double avgnadj, avgvol;
   
-  if (argc < 2) {
-    printf("Please specify a parameter file\n");
-    exit(0);
-  } else paramfile = argv[1];
+  /* Parse command line */
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return 1;
+      default:
+        print_usage(argv[0]);
+        abort();
+    }
+  }
+
+  /* Parameter file should be a positional argument. */
+  if (optind == argc - 1) {
+    paramfile = argv[optind];
+  }
+  else {
+    fprintf(stderr, "You forgot to specify a parameter file.\n\n");
+    fprintf(stderr, "Usage: %s [-h] paramfile\n", argv[0]);
+    return 1;
+  }
   read_parameters(paramfile);
 
   if (numdiv < 2) {
@@ -131,7 +164,7 @@ int main(int argc, char *argv[]) {
     avgvol += (double)(vols[p]);
   }
   if (npnotdone > 0)
-    printf("%d particles not done!\n");
+    printf("%d particles not done!\n", npnotdone);
   printf("%d particles done more than once.\n",nvpsum-np);
   avgnadj /= (double)np;
   avgvol /= (double)np;

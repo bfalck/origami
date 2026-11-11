@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "params.h"
 
 #define DL for (d=0;d<3;d++)
@@ -21,18 +22,34 @@ int par(int i, int j, int k, int ng) {
     return i + (j + k*ng)*ng;
 }
 
+/* Forward declaration of functions. */
 void read_parameters(char *filename);
 int posread(char *filename, float ***p, float fact);
 int readgadget(char *filename, float ***p);
 
+/* Program usage. */
+void print_usage(const char *prog_name) {
+    printf("%s: morphology identification.\n\n", prog_name);
+    printf("  DETAILS:\n\n"
+           "  Calculate the ORIGAMI morphology of every particle and save this as a\n"
+           "  byte array in outdir/NAMEtag.dat. The morphology index is 0 for voids,\n"
+           "  1 for walls, 2 for filaments, and 3 for halo particles, corresponding to\n"
+           "  the maximum number of orthogonal axes along which shell-crossing has been\n"
+           "  detected. This should run much faster than the tessellation calculation.\n\n");
+    printf("Usage: %s [-h] paramfile\n", prog_name);
+    printf("  -h            Show this help message\n");
+}
 
 int main(int argc, char *argv[]) {
+    int opt;
+    char *paramfile = NULL;
+
     int exitcode;
     int np;
     float **r;
 
     FILE *pos, *tag;
-    char *paramfile,tagoutfile[80];
+    char tagoutfile[80];
     float xmin,xmax,ymin,ymax,zmin,zmax;
   
     int s;
@@ -42,10 +59,31 @@ int main(int argc, char *argv[]) {
     int zstart, ystart, xstart, zend, yend, xend;
     float dx,d1,d2;
 
-    if (argc < 2) {
-      printf("Please specify a parameter file\n");
-      exit(0);
-    } else paramfile = argv[1];
+    /* Parse command line */
+    while ((opt = getopt(argc, argv, "h")) != -1) {
+        switch (opt) {
+            case 'h':
+                print_usage(argv[0]);
+                return 0;
+            case '?':
+                print_usage(argv[0]);
+                return 1;
+            default:
+                print_usage(argv[0]);
+                abort();
+        }
+    }
+
+    /* Parameter file should be a positional argument. */
+    if (optind == argc - 1) {
+        paramfile = argv[optind];
+    }
+    else {
+        fprintf(stderr, "You forgot to specify a parameter file.\n\n");
+        fprintf(stderr, "Usage: %s [-h] paramfile\n", argv[0]);
+        return 1;
+    }
+
     read_parameters(paramfile);
 
     b2 = boxsize/2.;

@@ -13,6 +13,7 @@ extern float boxsize;
 extern int np1d;
 extern int nsplit;
 extern int numfiles;
+extern int nbuf;
 extern float buffer;
 extern int numdiv;
 extern float volcut;

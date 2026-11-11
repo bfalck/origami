@@ -6,6 +6,7 @@
 // The full license is in the file LICENSE, distributed with this software.
 //-----------------------------------------------------------------------------
 
+#include <unistd.h>
 #include "qhull_a.h"
 #include "voz.h"
 #include "params.h"
@@ -17,11 +18,27 @@ void read_parameters(char *filename);
 int posread(char *posfile, float ***p, float fact);
 int readgadget(char *filename, float ***p);
 
+/* Program usage. */
+void print_usage(const char *prog_name) {
+  printf("%s: VOBOZ script initializer. Run before voz1b1.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Running vozinit will create a script called NAMEscr in the code/ directory;\n"
+         "  running NAMEscr will temporarily create files starting with 'part' in the\n"
+         "  current directory then delete them when finished, and will output the\n"
+         "  adjacency and volume files to outdir/NAMEadj.dat and outdir/NAMEvol.dat.\n"
+         "  The adjacency file gives you the Delaunay neighbors of each particle, and the\n"
+         "  volume file gives you the volume of each particle normalized to unity.\n\n");
+  printf("Usage: %s [-h] paramfile\n", prog_name);
+  printf("  -h            Show this help message\n");
+}
+
 int main(int argc, char *argv[]) {
+  int opt;
+  char *paramfile = NULL;
   int i, np;
   float **rfloat, rtemp[3];
   FILE *pos, *scr;
-  char scrfile[80], systemstr[90],*paramfile;
+  char scrfile[80], systemstr[90];
   float xmin,xmax,ymin,ymax,zmin,zmax;
 
   int isitinbuf;
@@ -31,10 +48,30 @@ int main(int argc, char *argv[]) {
   float c[3];
   int b[3];
 
-  if (argc < 2) {
-    printf("Please specify a parameter file\n");
-    exit(0);
-  } else paramfile = argv[1];
+  /* Parse command line */
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return 1;
+      default:
+        print_usage(argv[0]);
+        abort();
+    }
+  }
+
+  /* Parameter file should be a positional argument. */
+  if (optind == argc - 1) {
+    paramfile = argv[optind];
+  }
+  else {
+    fprintf(stderr, "You forgot to specify a parameter file.\n\n");
+    fprintf(stderr, "Usage: %s [-h] paramfile\n", argv[0]);
+    return 1;
+  }
   read_parameters(paramfile);
 
   if (numdiv < 2) {

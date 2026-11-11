@@ -17,7 +17,7 @@ QINC = -I/users/bfalck/qhull-2012.1/src/libqhull/
 
 all: vozinit voz1b1 voztie origamitag origamihalo origamicen origamienv
 
-origami: origamitag origamihalo origamicen origamienv
+origami: origamitag origamidiv origamihalo origamicen origamienv
 
 voboz: vozinit voz1b1 voztie
 
@@ -25,6 +25,11 @@ origamitag: origamitag.o readfiles.o
 	$(CC) $(CFLAGS) -o origamitag origamitag.o readfiles.o
 origamitag.o: origamitag.c
 	$(CC) $(CFLAGS) -c origamitag.c
+
+origamidiv: origamidiv.o readfiles.o
+	$(CC) $(CFLAGS) -o origamidiv origamidiv.o readfiles.o
+origamidiv.o: origamidiv.c
+	$(CC) $(CFLAGS) -c origamidiv.c
 
 origamihalo: origamihalo.o readfiles.o
 	$(CC) $(CFLAGS) -o origamihalo origamihalo.o readfiles.o

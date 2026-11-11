@@ -13,6 +13,10 @@
 #define DL for (d=0;d<3;d++) /* Dimension loop */
 #define BF 1e30
 
+int load_snapshot(char *fname, int files);
+int reordering(void);
+int allocate_memory(void);
+
 /* Gadget variables: */
 struct io_header_1
 {
@@ -57,6 +61,7 @@ float boxsize;
 int np1d;
 int nsplit;
 int numfiles;
+int nbuf;
 float buffer;
 int numdiv;
 float volcut;
@@ -89,6 +94,12 @@ void read_parameters(char *filename) {
   fscanf(fd,"%s %d",inbuf,&np1d);
   fscanf(fd,"%s %d",inbuf,&nsplit);
   fscanf(fd,"%s %d",inbuf,&numfiles);
+
+  fgets(inbuf,maxline,fd);
+  fgets(inbuf,maxline,fd);
+  fgets(inbuf,maxline,fd);
+
+  fscanf(fd,"%s %d",inbuf,&nbuf);
 
   fgets(inbuf,maxline,fd);
   fgets(inbuf,maxline,fd);
@@ -174,6 +185,160 @@ int posread(char *posfile, float ***p, float fact) {
   /*
   xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
   for (i=0; i<np;i++) {
+    if ((*p)[i][0]<xmin) xmin = (*p)[i][0]; if ((*p)[i][0]>xmax) xmax = (*p)[i][0];
+    if ((*p)[i][1]<ymin) ymin = (*p)[i][1]; if ((*p)[i][1]>ymax) ymax = (*p)[i][1];
+    if ((*p)[i][2]<zmin) zmin = (*p)[i][2]; if ((*p)[i][2]>zmax) zmax = (*p)[i][2];
+  }
+  printf("np: %d, x: %f,%f; y: %f,%f; z: %f,%f\n",np,xmin,xmax, ymin,ymax, zmin,zmax); fflush(stdout);
+  */
+  return(np);
+}
+
+/* Positions in subdivision */
+/* Returns number of particles read */
+long divread(char *posfile, float ***p, float fact, float boxsize, int np1d, int npd, int ndiv, int divid, int nbuf) {
+
+  FILE *pos;
+  int dum,d, j,k,l,n, np2,np3,nd3, x,y,z, x2,y2,z2, id;
+  long np,i;
+  float xmin,xmax,ymin,ymax,zmin,zmax;
+  float *ptemp;
+
+  //printf("fact=%f\n",fact);
+  fflush(stdout);
+
+  pos = fopen(posfile, "r");
+  if (pos == NULL) {
+    printf("Unable to open position file %s\n\n",posfile);
+    exit(0);
+  }
+  /* Fortran77 4-byte headers and footers */
+  /* Delete "dum" statements if you don't need them */
+
+  /* Read number of particles */
+  /*fread(&dum,1,4,pos); */
+  fread(&np,1, sizeof(long),pos); 
+  /*fread(&dum,1,4,pos);*/
+
+  np2 = npd+nbuf+nbuf;
+  np3 = np2*np2*np2;
+  nd3 = ndiv*ndiv*ndiv;
+
+  /* Allocate the arrays */
+  (*p) = (float **)malloc(np3*sizeof(float *));
+  ptemp = (float *)malloc((np/nd3)*sizeof(float));
+
+  //printf("np = %d\n",np);
+
+  for (n=0; n<nd3; n++) {
+    fread(ptemp,np/nd3,4,pos);
+    for (i=(n*np)/nd3; i<((n+1)*np)/nd3; i++) {
+      x = (i%np1d)-np1d-(npd*(divid%ndiv));
+      y = ((i/np1d)%np1d)-np1d-(npd*((divid/ndiv)%ndiv));
+      z = (i/(np1d*np1d))-np1d-(npd*(divid/(ndiv*ndiv)));
+      for (j=0; j<3; j++) {
+        z2 = z+(np1d*j)+nbuf;
+        if (z2<0 || z2>=np2) {
+          continue;
+        }
+        for (k=0; k<3; k++) {
+          y2 = y+(np1d*k)+nbuf;
+          if (y2<0 || y2>=np2) {
+            continue;
+          }
+          for (l=0; l<3; l++) {
+            x2 = x+(np1d*l)+nbuf;
+            if (x2<0 || x2>=np2) {
+              continue;
+            }
+            id = (np2*np2*z2)+(np2*y2)+x2;
+            (*p)[id] = (float *)malloc(3*sizeof(float));
+            if ((*p)[id] == NULL) {
+              printf("Unable to allocate particle array in readfiles!\n");
+              fflush(stdout);
+              exit(0);
+            }
+            (*p)[id][0] = ptemp[i-((n*np)/nd3)]+(l-1)*boxsize;
+          }
+        }
+      }
+    }
+  }
+  /*fread(&dum,1,4,pos); 
+    fread(&dum,1,4,pos); */
+  for (n=0; n<nd3; n++){
+    fread(ptemp,np/nd3,4,pos);
+    for (i=(n*np)/nd3; i<((n+1)*np)/nd3; i++) {
+      x = (i%np1d)-np1d-(npd*(divid%ndiv));
+      y = ((i/np1d)%np1d)-np1d-(npd*((divid/ndiv)%ndiv));
+      z = (i/(np1d*np1d))-np1d-(npd*(divid/(ndiv*ndiv)));
+      for (j=0; j<3; j++) {
+        z2 = z+(np1d*j)+nbuf;
+        if (z2<0 || z2>=np2) {
+          continue;
+        }
+        for (k=0; k<3; k++) {
+          y2 = y+(np1d*k)+nbuf;
+          if (y2<0 || y2>=np2) {
+            continue;
+          }
+          for (l=0; l<3; l++) {
+            x2 = x+(np1d*l)+nbuf;
+            if (x2<0 || x2>=np2) {
+              continue;
+            }
+            id = (np2*np2*z2)+(np2*y2)+x2;
+            (*p)[id][1] = ptemp[i-((n*np)/nd3)]+(k-1)*boxsize;
+          }
+        }
+      }
+    }
+  }
+  /*fread(&dum,1,4,pos);
+    fread(&dum,1,4,pos); */
+  for (n=0; n<nd3; n++) {
+    fread(ptemp,np/nd3,4,pos);
+    for (i=(n*np)/nd3; i<((n+1)*np)/nd3; i++) {
+      x = (i%np1d)-np1d-(npd*(divid%ndiv));
+      y = ((i/np1d)%np1d)-np1d-(npd*((divid/ndiv)%ndiv));
+      z = (i/(np1d*np1d))-np1d-(npd*(divid/(ndiv*ndiv)));
+      for (j=0; j<3; j++) {
+        z2 = z+(np1d*j)+nbuf;
+        if (z2<0 || z2>=np2) {
+          continue;
+        }
+        for (k=0; k<3; k++) {
+          y2 = y+(np1d*k)+nbuf;
+          if (y2<0 || y2>=np2) {
+            continue;
+          }
+          for (l=0; l<3; l++) {
+            x2 = x+(np1d*l)+nbuf;
+            if (x2<0 || x2>=np2) {
+              continue;
+            }
+            id = (np2*np2*z2)+(np2*y2)+x2;
+            (*p)[id][2] = ptemp[i-((n*np)/nd3)]+(j-1)*boxsize;
+          }
+        }
+      }
+    }
+  }
+
+  /*fread(&dum,1,4,pos); */
+
+  fclose(pos);
+  free(ptemp);
+
+  /* Get into physical units */
+
+  for (i=0; i<np3; i++) DL (*p)[i][d] *= fact;
+
+
+  /* Test range -- can comment out */
+  /*
+  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
+  for (i=0; i<np3;i++) {
     if ((*p)[i][0]<xmin) xmin = (*p)[i][0]; if ((*p)[i][0]>xmax) xmax = (*p)[i][0];
     if ((*p)[i][1]<ymin) ymin = (*p)[i][1]; if ((*p)[i][1]>ymax) ymax = (*p)[i][1];
     if ((*p)[i][2]<zmin) zmin = (*p)[i][2]; if ((*p)[i][2]>zmax) zmax = (*p)[i][2];

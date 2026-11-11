@@ -7,6 +7,9 @@ np1d		256
 nsplit		1
 numfiles	0
 
+# Used by origamitag_div
+nbuf            64
+
 # Used by vozinit
 buffer		0.1
 ndiv		2

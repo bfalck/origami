@@ -9,9 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
 #include "params.h"
 
 #define BIGFLT 1e30 /* Biggest possible floating-point number */
+
+void read_parameters(char *filename);
 
 typedef struct Particle {
   float vol;
@@ -20,12 +23,29 @@ typedef struct Particle {
   int *adj;
 } PARTICLE;
 
+/* Program usage. */
+void print_usage(const char *prog_name) {
+  printf("%s: group halos after tesselation + morphology identification.\n\n", prog_name);
+  printf("  DETAILS:\n\n"
+         "  Once you have the tessellation and morphology files, this groups the\n"
+         "  identified halo particles into distinct halos. Running produces the file\n"
+         "  outdir/HNAMEhns.dat containing the particle IDs in each halo. This binary\n"
+         "  file first contains the (4 byte integer) number of halos, then the number\n"
+         "  of particles in the first halo, then the particle IDs in the first halo,\n"
+         "  etc. Refer to the IDL routine origamicat.pro for an example of how to read\n"
+         "  this file. See the ORIGAMI paper for details on the effect of the volume\n"
+         "  cut parameter.\n\n");
+  printf("Usage: %s [-h] paramfile\n", prog_name);
+  printf("  -h            Show this help message\n");
+}
 
 int main(int argc,char **argv) {
 
+  int opt;
+  char *paramfile = NULL;
+
   FILE *adj, *vol, *tag, *hn;
   PARTICLE *p;
-  char *paramfile;
   char adjfile[80], volfile[80], tagfile[80], halolistfile[80];
   int i, j,k,l, h, h2,hl,n,np, np2, nhaloes, nhl, nhlcount, nhl2;
   int *halonum, *halolist, *halolist2, *lonecore;
@@ -33,10 +53,30 @@ int main(int argc,char **argv) {
   int change,minhalonum,numcut,ncp;
   int **hm,*numinh,*haloid,nh,*nph,haloidtoadd;
 
-  if (argc < 2) {
-    printf("Please specify a parameter file\n");
-    exit(0);
-  } else paramfile = argv[1];
+  /* Parse command line */
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return 1;
+      default:
+        print_usage(argv[0]);
+        abort();
+    }
+  }
+
+  /* Parameter file should be a positional argument. */
+  if (optind == argc - 1) {
+    paramfile = argv[optind];
+  }
+  else {
+    fprintf(stderr, "You forgot to specify a parameter file.\n\n");
+    fprintf(stderr, "Usage: %s [-h] paramfile\n", argv[0]);
+    return 1;
+  }
   read_parameters(paramfile);
 
   sprintf(adjfile,"%s%sadj.dat",outdir,taglabel);
@@ -248,7 +288,7 @@ int main(int argc,char **argv) {
 	  minhalonum = halonum[i];
 	  for (j=0; j< p[i].nadj; j++) {
 	    adjj = p[i].adj[j];
-	    if ((p[adjj].tag == 3)) {
+	    if (p[adjj].tag == 3) {
 	      if (halonum[adjj] < minhalonum) {
 		if ((p[halonum[adjj]].vol >= volcut)||(lonecore[halonum[adjj]]==1)) {
 		  change=1;
@@ -261,7 +301,7 @@ int main(int argc,char **argv) {
 	    halonum[i] = minhalonum;
 	    for (j=0; j< p[i].nadj; j++) {
 	      adjj = p[i].adj[j];
-	      if ((p[adjj].tag == 3)) {
+	      if (p[adjj].tag == 3) {
 		if ((p[halonum[adjj]].vol >= volcut)||(lonecore[halonum[adjj]]==1)) {
 		  halonum[adjj] = minhalonum;
 		}
